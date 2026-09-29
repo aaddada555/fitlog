@@ -1,0 +1,51 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install buildozer and dependencies
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
+        pip install buildozer Cython==0.29.36
+
+    - name: Pre-accept Android SDK licenses
+      run: |
+        export ANDROID_HOME=/opt/android/android-sdk
+        export ANDROID_SDK_ROOT=/opt/android/android-sdk
+        mkdir -p $ANDROID_HOME/licenses
+        echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_HOME/licenses/android-sdk-license
+        echo "d56f5b8fc0415d7c4eead7db1d6a0ac6e7c2d6ff" >> $ANDROID_HOME/licenses/android-sdk-license
+        echo "d975f751698a77e662e9257e5a3d7ab4f4a3a8d4" >> $ANDROID_HOME/licenses/android-sdk-license
+        echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_HOME/licenses/android-sdk-preview-license
+        chmod -R 777 $ANDROID_HOME/licenses
+
+    - name: Build APK
+      run: buildozer -v android debug
+      env:
+        JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+        ANDROID_HOME: /opt/android/android-sdk
+        ANDROID_SDK_ROOT: /opt/android/android-sdk
+        ANDROID_NDK_HOME: /opt/android/android-ndk
+
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: fitlog-apk
+        path: bin/*.apk
+        retention-days: 30

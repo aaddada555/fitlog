@@ -1,0 +1,7 @@
+*.db
+*.apk
+*.zip
+bin/
+.buildozer/
+__pycache__/
+*.pyc
